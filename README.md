@@ -55,3 +55,74 @@ Typical uses are:
 * Pod selector: you must specify a Pod selector that matches the labels of the .spec.template. .spec.selector is immutable and not compatible with kubectl apply. The .spec.selector contains two fields: matchLabels and matchExpressions. If the .spec.selector is specified, it must match the .spec.template.metadata.labels. 
 * Node selector: .spec.template.spec.nodeSelector.
 * Node affinity: .spec.template.spec.affinity.
+
+$ kubectl create -f daemonset.yml
+daemonset.apps/fluentd-elasticsearch created
+
+$ kubectl get daemonsets --namespace=kube-system 
+NAME                      DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                     AGE
+fluentd-elasticsearch     3         3         3       3            3           <none>                            7m45s
+
+$ kubectl describe ds fluentd-elasticsearch --namespace=kube-system
+Name:           fluentd-elasticsearch
+Selector:       name=fluentd-elasticsearch
+Node-Selector:  <none>
+Labels:         k8s-app=fluentd-logging
+Annotations:    deprecated.daemonset.template.generation: 1
+Desired Number of Nodes Scheduled: 3
+Current Number of Nodes Scheduled: 3
+Number of Nodes Scheduled with Up-to-date Pods: 3
+Number of Nodes Scheduled with Available Pods: 3
+Number of Nodes Misscheduled: 0
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  name=fluentd-elasticsearch
+  Containers:
+   fluentd-elasticsearch:
+    Image:      k8s.gcr.io/fluentd-elasticsearch:1.20
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      memory:  200Mi
+    Requests:
+      cpu:        100m
+      memory:     200Mi
+    Environment:  <none>
+    Mounts:
+      /var/lib/docker/containers from varlibdockercontainers (ro)
+      /var/log from varlog (rw)
+  Volumes:
+   varlog:
+    Type:          HostPath (bare host directory volume)
+    Path:          /var/log
+    HostPathType:  
+   varlibdockercontainers:
+    Type:          HostPath (bare host directory volume)
+    Path:          /var/lib/docker/containers
+    HostPathType:  
+Events:
+  Type    Reason            Age    From                  Message
+  ----    ------            ----   ----                  -------
+  Normal  SuccessfulCreate  9m51s  daemonset-controller  Created pod: fluentd-elasticsearch-2b8v5
+  Normal  SuccessfulCreate  9m51s  daemonset-controller  Created pod: fluentd-elasticsearch-vv9x8
+  Normal  SuccessfulCreate  9m51s  daemonset-controller  Created pod: fluentd-elasticsearch-gvgxn
+
+### Taints & tolerations
+The following tolerations are added to DaemonSet Pods automatically according to the related features:
+* node.kubernetes.io/not-ready
+* node.kubernetes.io/unreachable
+* node.kubernetes.io/disk-pressure
+* node.kubernetes.io/memory-pressure
+* node.kubernetes.io/unschedulable
+* node.kubernetes.io/network-unavailable
+
+### Alternatives
+* Init scripts: it's certainly possible to run daemon processes by directly starting them on a node (e.g. using init, upstartd, or systemd). This is perfectly fine. However, there are several advantages to running such processes via a DaemonSet:
+  * Ability to monitor and manage logs for daemons in the same way as applications.
+  * Same config language and tools (e.g. Pod templates, kubectl) for daemons and applications.
+  * Running daemons in containers with resource limits increases isolation between daemons from app containers. This can also be achieved by running the daemons in a container but not in a Pod (e.g. start directly via Docker).
+* Bare Pods
+* Static Pods
+* Deployments
+
+In conclusion, use a Deployment for stateless services, like frontends, where scaling up and down the number of replicas and rolling out updates are more important than controlling exactly which host the Pod runs on. Use a DaemonSet when it is important that a copy of a Pod always run on all or certain hosts, and when it needs to start before other Pods.
