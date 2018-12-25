@@ -40,3 +40,18 @@ selector:
   matchExpressions:
     - {key: tier, operator: In, values: [cache]}
     - {key: environment, operator: NotIn, values: [dev]}
+
+## DaemonSet
+A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster, Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected. Deleting a DaemonSet will clean up the Pods it created.
+
+Typical uses are:
+* Running a cluster storage daemon, such as glusterd, ceph, on each node.
+* Running a logs collection daemon on every node, such as fluentd or logstash.
+* Running a node monitoring daemon on every node, such as Prometheus Node Explorer, collectd.
+
+### Create a DaemonSet 
+* Required fields: apiVersion, kind, metadata. A DaemonSet also needs a .spec section. 
+* Pod template: the .spec.template is the required fields in .spec. It's a Pod template, exactly having the same schema as a Pod, except it is nested and does not have an apiVersion or kind.
+* Pod selector: you must specify a Pod selector that matches the labels of the .spec.template. .spec.selector is immutable and not compatible with kubectl apply. The .spec.selector contains two fields: matchLabels and matchExpressions. If the .spec.selector is specified, it must match the .spec.template.metadata.labels. 
+* Node selector: .spec.template.spec.nodeSelector.
+* Node affinity: .spec.template.spec.affinity.
