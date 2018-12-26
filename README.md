@@ -126,3 +126,26 @@ The following tolerations are added to DaemonSet Pods automatically according to
 * Deployments
 
 In conclusion, use a Deployment for stateless services, like frontends, where scaling up and down the number of replicas and rolling out updates are more important than controlling exactly which host the Pod runs on. Use a DaemonSet when it is important that a copy of a Pod always run on all or certain hosts, and when it needs to start before other Pods.
+
+## Compute resource
+CPU and memory are each a resource type. A resource type has a base unit. CPU is specified in units of cores, and memory is specified in units of bytes.
+
+CPU and memory are collectively referred to as compute resources, or just resources. Compute resources are measurable quantities that can be requested, allocated, and consumed. They are distinct from API resources, such as Pods and Services, which are objects that can be read and modified through the Kubernetes API server.
+
+### Resource requests & limits
+* spec.containers[].resources.limits.cpu
+* spec.containers[].resources.limits.memory
+* spec.containers[].resources.requests.cpu
+* spec.containers[].resources.requests.memory
+
+### CPU
+Used as the value of the --cpu-shares flag in the docker run command.
+
+The expression 0.1 is equivalent to the expression 100m.
+
+### Memory
+Used as the value of the --memory flag in the docker run command.
+
+128974848, 129e6, 129M, 123Mi are roughly the same value.
+
+If a container exceeds its memory limit, it might be terminated. If it is restartable, the kubelet will restart it, as with any other type of runtime failure. If a container exceeds its memory request, it is likely that its Pod will be evicted whenever the node runs out of memory.
