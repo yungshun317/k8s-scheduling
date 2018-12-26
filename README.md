@@ -149,3 +149,50 @@ Used as the value of the --memory flag in the docker run command.
 128974848, 129e6, 129M, 123Mi are roughly the same value.
 
 If a container exceeds its memory limit, it might be terminated. If it is restartable, the kubelet will restart it, as with any other type of runtime failure. If a container exceeds its memory request, it is likely that its Pod will be evicted whenever the node runs out of memory.
+
+## Configure multiple schedulers
+Kubernetes ships with a default scheduler. However, you can run multiple schedulers simultaneously alongside the default scheduler and instruct Kubernetes what scheduler to use for each of your pods. 
+
+### Define a Deployment for the scheduler
+1. The name of the scheduler specified as an argument to the scheduler command in the container spec should be unique. This is the name that is matched against the value of the optional spec.schedulerName on Pods, to determine whether this scheduler is responsible for scheduling a particular Pod.
+2. We created a dedicated service account my-scheduler and bind the cluster role system:kube-scheduler to it so that it can acquire the same privileges as kube-scheduler.
+3. Package your scheduler binary into a container image first. In my case, yungshun317/my-kube-scheduler:1.0.
+
+$ kubectl create -f scheduler.yml
+serviceaccount/my-scheduler created
+clusterrolebinding.rbac.authorization.k8s.io/my-scheduler-as-kube-scheduler created
+deployment.apps/my-scheduler created
+
+$ kubectl get pods --namespace=kube-system
+NAME                                 READY   STATUS    RESTARTS   AGE
+my-scheduler-59dd458d79-nhm59        1/1     Running   0          3m59s
+
+To run multiple-scheduler with leader election enabled, you must do the following:
+1. Update the fields commented in scheduler.yml.
+2. If RBAC is enabled on the cluster, you must update the system:kube-scheduler cluster role. Add your scheduler name to the resouceNames of the rule applied for endpoints resources. As:
+
+$ kubectl edit clusterrole system:kube-scheduler
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    annotations:
+      rbac.authorization.kubernetes.io/autoupdate: "true"
+    labels:
+      kubernetes.io/bootstrapping: rbac-defaults
+    name: system:kube-scheduler
+  rules:
+  - apiGroups:
+    - ""
+    resourceNames:
+    - kube-scheduler
+    # Add your scheduler.
+    - my-scheduler
+    resources:
+    - endpoints
+    verbs:
+    - delete
+    - get
+    - patch
+    - update
+
+clusterrole.rbac.authorization.k8s.io/system:kube-scheduler edited
