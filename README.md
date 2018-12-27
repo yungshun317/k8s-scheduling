@@ -4,7 +4,7 @@
 * Understand how resource limits can affect Pod scheduling.
 * Understand how to run multiple schedulers and how to configure Pods to use them.
 * Manually schedule a pod without a scheduler.
-* 
+* Display scheduler events.
 
 ## Labels & Selectors
 Labels are key/value pairs. Unlike names and UIDs, labels do not provide uniquesness. In general, Kubernetes expects many objects to carry the same label(s). Via a label selector, the client/user can identify a set of objects. The label selector is the core grouping primitive in Kubernetes.
@@ -233,4 +233,39 @@ $ sudo rm /etc/kubernetes/manifests/static-pod.yml
 $ kubectl get po
 No resources found.
 
-#
+# Scheduler events
+1. Use get events command.
+
+$ kubectl get events
+LAST SEEN   TYPE     REASON                    KIND   MESSAGE
+31m         Normal   Starting                  Node   Starting kubelet.
+31m         Normal   NodeHasSufficientMemory   Node   Node k8s-master status is now: NodeHasSufficientMemory
+31m         Normal   NodeHasNoDiskPressure     Node   Node k8s-master status is now: NodeHasNoDiskPressure
+31m         Normal   NodeHasSufficientPID      Node   Node k8s-master status is now: NodeHasSufficientPID
+31m         Normal   NodeAllocatableEnforced   Node   Updated Node Allocatable limit across pods
+14s         Normal   Scheduled                 Pod    Successfully assigned default/no-annotation to k8s-worker-2
+3s          Normal   Pulled                    Pod    Container image "k8s.gcr.io/pause:2.0" already present on machine
+3s          Normal   Created                   Pod    Created container
+2s          Normal   Started                   Pod    Started container
+
+$ kubectl get events --field-selector involvedObject.name=no-annotation
+LAST SEEN   TYPE     REASON      KIND   MESSAGE
+3m27s       Normal   Scheduled   Pod    Successfully assigned default/no-annotation to k8s-worker-2
+3m16s       Normal   Pulled      Pod    Container image "k8s.gcr.io/pause:2.0" already present on machine
+3m16s       Normal   Created     Pod    Created container
+3m15s       Normal   Started     Pod    Started container
+
+2. Use kubectl describe to get events only for a Pod.
+
+$ kubectl describe pod no-annotation | grep -A20 Events
+Events:
+  Type    Reason     Age    From                   Message
+  ----    ------     ----   ----                   -------
+  Normal  Scheduled  5m37s  default-scheduler      Successfully assigned default/no-annotation to k8s-worker-2
+  Normal  Pulled     5m26s  kubelet, k8s-worker-2  Container image "k8s.gcr.io/pause:2.0" already present on machine
+  Normal  Created    5m26s  kubelet, k8s-worker-2  Created container
+  Normal  Started    5m25s  kubelet, k8s-worker-2  Started container
+
+3. The log file of kube-scheduler is placed under the /var/log/containers directory on the master node.
+
+
