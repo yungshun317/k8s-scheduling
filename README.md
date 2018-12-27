@@ -196,3 +196,11 @@ $ kubectl edit clusterrole system:kube-scheduler
     - update
 
 clusterrole.rbac.authorization.k8s.io/system:kube-scheduler edited
+
+### Specify schedulers for Pods
+$ kubectl create -f pod-without-schedulername.yml 
+pod/no-annotation created
+$ kubectl create -f pod-with-default-scheduler.yml
+pod/annotation-default-scheduler created
+$ kubectl create -f pod-with-my-scheduler.yml
+pod/annotation-second-scheduler created
