@@ -5,6 +5,7 @@
 * Understand how to run multiple schedulers and how to configure Pods to use them.
 * Manually schedule a pod without a scheduler.
 * Display scheduler events.
+* Know how to configure the Kubernetes scheduler.
 
 ## Labels & Selectors
 Labels are key/value pairs. Unlike names and UIDs, labels do not provide uniquesness. In general, Kubernetes expects many objects to carry the same label(s). Via a label selector, the client/user can identify a set of objects. The label selector is the core grouping primitive in Kubernetes.
@@ -268,4 +269,5 @@ Events:
 
 3. The log file of kube-scheduler is placed under the /var/log/containers directory on the master node.
 
-
+## Configure the Kubernetes scheduler
+The manifest file is /etc/kubernetes/manifests/kube-scheduler.yaml. Configure by modifying flags in the .spec.containers.command field. 
