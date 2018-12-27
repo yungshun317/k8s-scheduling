@@ -3,6 +3,8 @@
 * Understand the role of DaemonSets.
 * Understand how resource limits can affect Pod scheduling.
 * Understand how to run multiple schedulers and how to configure Pods to use them.
+* Manually schedule a pod without a scheduler.
+* 
 
 ## Labels & Selectors
 Labels are key/value pairs. Unlike names and UIDs, labels do not provide uniquesness. In general, Kubernetes expects many objects to carry the same label(s). Via a label selector, the client/user can identify a set of objects. The label selector is the core grouping primitive in Kubernetes.
@@ -204,3 +206,31 @@ $ kubectl create -f pod-with-default-scheduler.yml
 pod/annotation-default-scheduler created
 $ kubectl create -f pod-with-my-scheduler.yml
 pod/annotation-second-scheduler created
+
+## Static Pods
+Static Pods are managed directly by kubelet daemon on a specific node, without the API server observing it.
+
+### Static Pod creation
+1. Configuration files
+  1. (Deprecated) Use $ kubelet --pod-manifest-path=<directory> to start kubelet daemon.
+  2. Modify the staticPodPath: <directory> field in the configuration file. By default, the config.yaml file is located under the /var/lib/kubelet directory and the staticPodPath is set to /etc/kubernetes/manifests, so just place the static-pod.yml under this directory and run
+
+$ systemctl restart kubelet
+
+$ kubectl get po
+NAME                    READY   STATUS    RESTARTS   AGE
+static-web-k8s-master   1/1     Running   0          58s
+
+2. HTTP: kubelet periodically downloads a file specified by --manifest-url=<URL> argument and interprets it as a json/yaml file with a pod definition. It works the same as --pod-manifest-path=<directory>.
+
+### Dynamic addition and removal of static Pods
+Note that the static-web-k8s-master Pod in our example is just a mirror Pod created by kubelet. We can't remove it using kubectl and, if stopped by docker stop, kubelet will restart it automatically.
+
+By default, kubelet periodically scans the configured directory.
+ 
+$ sudo rm /etc/kubernetes/manifests/static-pod.yml
+
+$ kubectl get po
+No resources found.
+
+#
